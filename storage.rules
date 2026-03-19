@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwnerPath(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Pet images are stored at: petImages/{uid}/{petId}/{filename}
+    match /petImages/{userId}/{petId}/{fileName} {
+      allow read: if isOwnerPath(userId);
+      allow write: if isOwnerPath(userId)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}
+
